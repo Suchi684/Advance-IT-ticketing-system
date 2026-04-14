@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FiHome, FiInbox, FiGrid } from 'react-icons/fi';
+import { FiHome, FiInbox, FiGrid, FiClipboard } from 'react-icons/fi';
 import { CATEGORIES } from '../../utils/constants';
 
 export default function Sidebar() {
@@ -14,6 +14,9 @@ export default function Sidebar() {
         </NavLink>
         <NavLink to="/tickets" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <FiInbox /> All Tickets
+        </NavLink>
+        <NavLink to="/assigned" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <FiClipboard /> Assigned Tasks
         </NavLink>
         <div className="nav-divider">Categories</div>
         {CATEGORIES.map(cat => (

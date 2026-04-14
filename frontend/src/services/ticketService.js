@@ -11,3 +11,5 @@ export const updateStatus = (id, status) => api.put(`/tickets/${id}/status`, { s
 export const updatePriority = (id, priority) => api.put(`/tickets/${id}/priority`, { priority });
 
 export const updateCategory = (id, category) => api.put(`/tickets/${id}/category`, { category });
+
+export const getAssignedTickets = (params) => api.get('/tickets/assigned', { params });
