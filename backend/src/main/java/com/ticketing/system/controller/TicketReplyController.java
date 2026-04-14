@@ -1,7 +1,9 @@
 package com.ticketing.system.controller;
 
+import com.ticketing.system.model.ActivityLog;
 import com.ticketing.system.model.TicketReply;
 import com.ticketing.system.model.dto.TicketReplyRequest;
+import com.ticketing.system.service.ActivityLogService;
 import com.ticketing.system.service.TicketReplyService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,11 @@ import java.util.stream.Collectors;
 public class TicketReplyController {
 
     private final TicketReplyService replyService;
+    private final ActivityLogService activityLogService;
 
-    public TicketReplyController(TicketReplyService replyService) {
+    public TicketReplyController(TicketReplyService replyService, ActivityLogService activityLogService) {
         this.replyService = replyService;
+        this.activityLogService = activityLogService;
     }
 
     @GetMapping("/replies")
@@ -51,6 +55,15 @@ public class TicketReplyController {
         return ResponseEntity.ok(mapReply(reply));
     }
 
+    @PostMapping("/note")
+    public ResponseEntity<Map<String, Object>> addNote(
+            @PathVariable Long ticketId,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        TicketReply note = replyService.addNote(ticketId, body.get("body"), authentication.getName());
+        return ResponseEntity.ok(mapReply(note));
+    }
+
     @PostMapping("/forward-all")
     public ResponseEntity<Map<String, String>> forwardAll(
             @PathVariable Long ticketId,
@@ -60,6 +73,21 @@ public class TicketReplyController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "Forwarded to all agents successfully");
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/activity")
+    public ResponseEntity<List<Map<String, Object>>> getActivity(@PathVariable Long ticketId) {
+        List<ActivityLog> logs = activityLogService.getByTicketId(ticketId);
+        List<Map<String, Object>> result = logs.stream().map(log -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", log.getId());
+            map.put("action", log.getAction());
+            map.put("details", log.getDetails());
+            map.put("performedBy", log.getPerformedBy());
+            map.put("createdAt", log.getCreatedAt());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(result);
     }
 
     private Map<String, Object> mapReply(TicketReply reply) {

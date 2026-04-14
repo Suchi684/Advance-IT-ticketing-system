@@ -11,6 +11,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -48,6 +51,30 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getAssignedTickets(authentication.getName(), pageable));
     }
 
+    @PutMapping("/bulk/status")
+    public ResponseEntity<Map<String, String>> bulkUpdateStatus(@RequestBody Map<String, Object> body) {
+        @SuppressWarnings("unchecked")
+        List<Integer> rawIds = (List<Integer>) body.get("ticketIds");
+        List<Long> ticketIds = rawIds.stream().map(Integer::longValue).toList();
+        String status = (String) body.get("status");
+        ticketService.bulkUpdateStatus(ticketIds, status);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Bulk status update completed");
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/bulk/assign")
+    public ResponseEntity<Map<String, String>> bulkAssign(@RequestBody Map<String, Object> body) {
+        @SuppressWarnings("unchecked")
+        List<Integer> rawIds = (List<Integer>) body.get("ticketIds");
+        List<Long> ticketIds = rawIds.stream().map(Integer::longValue).toList();
+        Long agentId = ((Number) body.get("agentId")).longValue();
+        ticketService.bulkAssign(ticketIds, agentId);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Bulk assign completed");
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TicketResponse> getTicketById(@PathVariable Long id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
@@ -71,5 +98,23 @@ public class TicketController {
     @PutMapping("/{id}/category")
     public ResponseEntity<TicketResponse> updateCategory(@PathVariable Long id, @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(ticketService.updateCategory(id, body.get("category")));
+    }
+
+    @PutMapping("/{id}/deadline")
+    public ResponseEntity<TicketResponse> updateDeadline(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(ticketService.updateDeadline(id, body.get("deadline")));
+    }
+
+    @PutMapping("/{id}/tags")
+    public ResponseEntity<TicketResponse> updateTags(@PathVariable Long id, @RequestBody Map<String, List<String>> body) {
+        List<String> tags = body.get("tags");
+        return ResponseEntity.ok(ticketService.updateTags(id, tags));
+    }
+
+    @PutMapping("/{id}/csat")
+    public ResponseEntity<TicketResponse> updateCsat(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Integer rating = (Integer) body.get("rating");
+        String comment = (String) body.get("comment");
+        return ResponseEntity.ok(ticketService.updateCsat(id, rating, comment));
     }
 }

@@ -25,6 +25,9 @@ public class User {
     @Column(nullable = false)
     private UserRole role = UserRole.AGENT;
 
+    @Column(name = "total_credits")
+    private Integer totalCredits = 0;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -61,6 +64,8 @@ public class User {
     public void setRole(UserRole role) { this.role = role; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Integer getTotalCredits() { return totalCredits; }
+    public void setTotalCredits(Integer totalCredits) { this.totalCredits = totalCredits; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

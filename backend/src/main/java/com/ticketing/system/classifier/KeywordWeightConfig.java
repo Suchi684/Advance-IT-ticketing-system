@@ -1,6 +1,5 @@
 package com.ticketing.system.classifier;
 
-import com.ticketing.system.model.enums.Category;
 import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,18 +7,18 @@ import java.util.Map;
 @Component
 public class KeywordWeightConfig {
 
-    private final Map<Category, Map<String, Double>> categoryKeywords = new HashMap<>();
+    private final Map<String, Map<String, Double>> categoryKeywords = new HashMap<>();
 
     public KeywordWeightConfig() {
-        categoryKeywords.put(Category.RETURN, buildReturnKeywords());
-        categoryKeywords.put(Category.EXCHANGE, buildExchangeKeywords());
-        categoryKeywords.put(Category.REFUND, buildRefundKeywords());
-        categoryKeywords.put(Category.LOW_QUALITY, buildLowQualityKeywords());
-        categoryKeywords.put(Category.SHIPPING, buildShippingKeywords());
-        categoryKeywords.put(Category.ORDER_ISSUE, buildOrderIssueKeywords());
+        categoryKeywords.put("RETURN", buildReturnKeywords());
+        categoryKeywords.put("EXCHANGE", buildExchangeKeywords());
+        categoryKeywords.put("REFUND", buildRefundKeywords());
+        categoryKeywords.put("LOW_QUALITY", buildLowQualityKeywords());
+        categoryKeywords.put("SHIPPING", buildShippingKeywords());
+        categoryKeywords.put("ORDER_ISSUE", buildOrderIssueKeywords());
     }
 
-    public Map<Category, Map<String, Double>> getCategoryKeywords() {
+    public Map<String, Map<String, Double>> getCategoryKeywords() {
         return categoryKeywords;
     }
 

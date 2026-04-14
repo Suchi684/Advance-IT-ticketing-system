@@ -80,6 +80,24 @@ public class TicketReplyService {
         return replyRepository.save(reply);
     }
 
+    public TicketReply addNote(Long ticketId, String body, String agentEmail) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+        User agent = userRepository.findByEmail(agentEmail)
+                .orElseThrow(() -> new RuntimeException("Agent not found"));
+
+        TicketReply note = new TicketReply();
+        note.setTicket(ticket);
+        note.setFromEmail(agentEmail);
+        note.setToEmail("internal");
+        note.setSubject("Note on: " + ticket.getSubject());
+        note.setBody(body);
+        note.setReplyType(ReplyType.NOTE);
+        note.setSentByAgent(agent);
+
+        return replyRepository.save(note);
+    }
+
     public void forwardToAll(Long ticketId, String subject, String body, String agentEmail) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));

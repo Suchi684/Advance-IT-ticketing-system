@@ -1,7 +1,10 @@
 import { FiSearch } from 'react-icons/fi';
-import { CATEGORIES, STATUSES } from '../../utils/constants';
+import { STATUSES } from '../../utils/constants';
+import { useCategories } from '../../context/CategoriesContext';
 
 export default function TicketFilters({ filters, onChange }) {
+  const { categories } = useCategories();
+
   const handleChange = (key, value) => {
     onChange({ ...filters, [key]: value, page: 0 });
   };
@@ -19,8 +22,8 @@ export default function TicketFilters({ filters, onChange }) {
       </div>
       <select value={filters.category || ''} onChange={(e) => handleChange('category', e.target.value)}>
         <option value="">All Categories</option>
-        {CATEGORIES.map(c => (
-          <option key={c.value} value={c.value}>{c.label}</option>
+        {(categories || []).map(c => (
+          <option key={c.name} value={c.name}>{c.label || c.name}</option>
         ))}
       </select>
       <select value={filters.status || ''} onChange={(e) => handleChange('status', e.target.value)}>

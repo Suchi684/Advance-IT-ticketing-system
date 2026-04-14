@@ -1,6 +1,5 @@
 package com.ticketing.system.model;
 
-import com.ticketing.system.model.enums.Category;
 import com.ticketing.system.model.enums.Priority;
 import com.ticketing.system.model.enums.TicketStatus;
 import jakarta.persistence.*;
@@ -37,8 +36,8 @@ public class Ticket {
     @Column(name = "received_date")
     private LocalDateTime receivedDate;
 
-    @Enumerated(EnumType.STRING)
-    private Category category = Category.GENERAL;
+    @Column(length = 50)
+    private String category = "GENERAL";
 
     @Enumerated(EnumType.STRING)
     private TicketStatus status = TicketStatus.OPEN;
@@ -58,6 +57,27 @@ public class Ticket {
 
     @Column(name = "attachment_info", columnDefinition = "TEXT")
     private String attachmentInfo;
+
+    @Column(name = "deadline")
+    private LocalDateTime deadline;
+
+    @Column(name = "reminder_sent")
+    private Boolean reminderSent = false;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "ticket_tags",
+        joinColumns = @JoinColumn(name = "ticket_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private java.util.Set<Tag> tags = new java.util.HashSet<>();
+
+    @Column(name = "csat_rating")
+    private Integer csatRating;
+
+    @Column(name = "csat_comment", columnDefinition = "TEXT")
+    private String csatComment;
+
+    @Column(name = "credits")
+    private Integer credits = 0;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -86,8 +106,8 @@ public class Ticket {
     public void setHtmlBody(String htmlBody) { this.htmlBody = htmlBody; }
     public LocalDateTime getReceivedDate() { return receivedDate; }
     public void setReceivedDate(LocalDateTime receivedDate) { this.receivedDate = receivedDate; }
-    public Category getCategory() { return category; }
-    public void setCategory(Category category) { this.category = category; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public TicketStatus getStatus() { return status; }
     public void setStatus(TicketStatus status) { this.status = status; }
     public Priority getPriority() { return priority; }
@@ -100,6 +120,18 @@ public class Ticket {
     public void setHasAttachments(Boolean hasAttachments) { this.hasAttachments = hasAttachments; }
     public String getAttachmentInfo() { return attachmentInfo; }
     public void setAttachmentInfo(String attachmentInfo) { this.attachmentInfo = attachmentInfo; }
+    public LocalDateTime getDeadline() { return deadline; }
+    public void setDeadline(LocalDateTime deadline) { this.deadline = deadline; }
+    public Boolean getReminderSent() { return reminderSent; }
+    public void setReminderSent(Boolean reminderSent) { this.reminderSent = reminderSent; }
+    public java.util.Set<Tag> getTags() { return tags; }
+    public void setTags(java.util.Set<Tag> tags) { this.tags = tags; }
+    public Integer getCsatRating() { return csatRating; }
+    public void setCsatRating(Integer csatRating) { this.csatRating = csatRating; }
+    public String getCsatComment() { return csatComment; }
+    public void setCsatComment(String csatComment) { this.csatComment = csatComment; }
+    public Integer getCredits() { return credits; }
+    public void setCredits(Integer credits) { this.credits = credits; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

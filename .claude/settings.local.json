@@ -4,7 +4,22 @@
       "Bash(./mvnw clean:*)",
       "Bash(mvn clean:*)",
       "Bash(curl -s -X POST http://localhost:8080/api/auth/reset-password -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"itssuchi1202@gmail.com\"\",\"\"newPassword\"\":\"\"test123\"\"}' -w \"\\\\nHTTP_STATUS: %{http_code}\")",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(npx vite:*)",
+      "Bash(curl -s http://localhost:8080/api/users/agents)",
+      "Bash(curl -s http://localhost:8080/api/dashboard/stats)",
+      "Bash(curl -s http://localhost:8080/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"itssuchi1202@gmail.com\",\"password\":\"suchi1202\"}')",
+      "Bash(mysql -u root -p1234 ticketing_system -e \"SELECT id, from_email, subject FROM tickets LIMIT 10;\")",
+      "Bash(where mysql:*)",
+      "Read(//c/Program Files/MySQL/MySQL Server 8.0/bin/**)",
+      "Read(//c/Program Files/MySQL/MySQL Server 8.4/bin/**)",
+      "Read(//c/xampp/mysql/bin/**)",
+      "Bash(\"C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p1234 ticketing_system -e \"SELECT id, from_email, subject FROM tickets ORDER BY id;\")",
+      "Bash('C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe' -u root -p1234 ticketing_system -e ':*)",
+      "Bash(\"C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p1234 ticketing_system -e \"SELECT id, email, name, company FROM contacts ORDER BY id;\")"
+    ],
+    "additionalDirectories": [
+      "d:\\Ticketing system\\backend\\.git"
     ]
   }
 }

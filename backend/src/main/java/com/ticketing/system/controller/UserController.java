@@ -30,6 +30,7 @@ public class UserController {
                     map.put("id", agent.getId());
                     map.put("name", agent.getName());
                     map.put("email", agent.getEmail());
+                    map.put("totalCredits", agent.getTotalCredits());
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -44,6 +45,7 @@ public class UserController {
         map.put("name", user.getName());
         map.put("email", user.getEmail());
         map.put("role", user.getRole().name());
+        map.put("totalCredits", user.getTotalCredits());
         return ResponseEntity.ok(map);
     }
 }

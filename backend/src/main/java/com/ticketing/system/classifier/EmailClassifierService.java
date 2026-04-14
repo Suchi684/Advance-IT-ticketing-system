@@ -1,6 +1,5 @@
 package com.ticketing.system.classifier;
 
-import com.ticketing.system.model.enums.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,18 +21,18 @@ public class EmailClassifierService {
         this.keywordConfig = keywordConfig;
     }
 
-    public Category classify(String subject, String body) {
+    public String classify(String subject, String body) {
         String processedSubject = preprocessor.preprocess(subject);
         String processedBody = preprocessor.preprocess(body);
         String combinedText = processedSubject + " " + processedBody;
 
         int totalWords = combinedText.split("\\s+").length;
-        if (totalWords == 0) return Category.GENERAL;
+        if (totalWords == 0) return "GENERAL";
 
-        Map<Category, Double> scores = new HashMap<>();
+        Map<String, Double> scores = new HashMap<>();
 
-        for (Map.Entry<Category, Map<String, Double>> entry : keywordConfig.getCategoryKeywords().entrySet()) {
-            Category category = entry.getKey();
+        for (Map.Entry<String, Map<String, Double>> entry : keywordConfig.getCategoryKeywords().entrySet()) {
+            String category = entry.getKey();
             Map<String, Double> keywords = entry.getValue();
             double score = 0.0;
 
@@ -41,11 +40,9 @@ public class EmailClassifierService {
                 String keyword = kwEntry.getKey().toLowerCase();
                 double weight = kwEntry.getValue();
 
-                // Check in subject (with multiplier)
                 int subjectCount = countOccurrences(processedSubject, keyword);
                 score += subjectCount * weight * SUBJECT_MULTIPLIER;
 
-                // Check in body
                 int bodyCount = countOccurrences(processedBody, keyword);
                 score += bodyCount * weight;
             }
@@ -54,10 +51,10 @@ public class EmailClassifierService {
             scores.put(category, normalizedScore);
         }
 
-        Category bestCategory = Category.GENERAL;
+        String bestCategory = "GENERAL";
         double bestScore = THRESHOLD;
 
-        for (Map.Entry<Category, Double> entry : scores.entrySet()) {
+        for (Map.Entry<String, Double> entry : scores.entrySet()) {
             if (entry.getValue() > bestScore) {
                 bestScore = entry.getValue();
                 bestCategory = entry.getKey();

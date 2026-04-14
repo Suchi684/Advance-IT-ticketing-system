@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { sendReply } from '../../services/replyService';
+import { getCannedResponses } from '../../services/cannedResponseService';
 import { toast } from 'react-toastify';
 
 export default function ReplyModal({ isOpen, onClose, ticket, onSuccess }) {
@@ -8,6 +9,24 @@ export default function ReplyModal({ isOpen, onClose, ticket, onSuccess }) {
   const [subject, setSubject] = useState(`Re: ${ticket?.subject || ''}`);
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
+  const [templates, setTemplates] = useState([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      getCannedResponses()
+        .then(res => setTemplates(res.data))
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
+  const handleTemplateSelect = (e) => {
+    const templateId = e.target.value;
+    if (!templateId) return;
+    const template = templates.find(t => String(t.id) === templateId);
+    if (template) {
+      setBody(template.body);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,6 +47,18 @@ export default function ReplyModal({ isOpen, onClose, ticket, onSuccess }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Reply to Email">
       <form onSubmit={handleSubmit}>
+        {templates.length > 0 && (
+          <div className="template-picker">
+            <select onChange={handleTemplateSelect} defaultValue="">
+              <option value="">Use Template...</option>
+              {templates.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.title}{t.category ? ` (${t.category})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="form-group">
           <label>To</label>
           <input type="email" value={toEmail} onChange={(e) => setToEmail(e.target.value)} required />

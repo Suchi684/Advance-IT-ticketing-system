@@ -2,11 +2,11 @@ import { FiInbox, FiClock, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 
 export default function StatsCards({ stats }) {
   const cards = [
-    { label: 'Total Tickets', value: stats.totalTickets, icon: <FiInbox />, color: '#3498db' },
-    { label: 'Open', value: stats.openTickets, icon: <FiClock />, color: '#e74c3c' },
-    { label: 'In Progress', value: stats.inProgressTickets, icon: <FiClock />, color: '#f39c12' },
-    { label: 'Resolved', value: stats.resolvedTickets, icon: <FiCheckCircle />, color: '#27ae60' },
-    { label: 'Closed', value: stats.closedTickets, icon: <FiXCircle />, color: '#95a5a6' },
+    { label: 'Total Tickets', value: stats.totalTickets, icon: <FiInbox />, color: '#A0516B' },
+    { label: 'Open', value: stats.openTickets, icon: <FiClock />, color: '#C75050' },
+    { label: 'In Progress', value: stats.inProgressTickets, icon: <FiClock />, color: '#D4A0B0' },
+    { label: 'Resolved', value: stats.resolvedTickets, icon: <FiCheckCircle />, color: '#6B3A5E' },
+    { label: 'Closed', value: stats.closedTickets, icon: <FiXCircle />, color: '#8C8590' },
   ];
 
   return (

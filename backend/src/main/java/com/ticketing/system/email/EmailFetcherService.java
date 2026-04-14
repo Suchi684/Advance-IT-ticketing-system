@@ -1,8 +1,10 @@
 package com.ticketing.system.email;
 
 import com.ticketing.system.classifier.EmailClassifierService;
+import com.ticketing.system.model.Contact;
 import com.ticketing.system.model.Ticket;
-import com.ticketing.system.model.enums.Category;
+import com.ticketing.system.repository.ContactRepository;
+import com.ticketing.system.repository.SlaRepository;
 import com.ticketing.system.repository.TicketRepository;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
@@ -24,6 +26,8 @@ public class EmailFetcherService {
 
     private final TicketRepository ticketRepository;
     private final EmailClassifierService classifierService;
+    private final ContactRepository contactRepository;
+    private final SlaRepository slaRepository;
 
     @Value("${mail.imap.host}")
     private String imapHost;
@@ -37,9 +41,12 @@ public class EmailFetcherService {
     @Value("${mail.imap.password}")
     private String imapPassword;
 
-    public EmailFetcherService(TicketRepository ticketRepository, EmailClassifierService classifierService) {
+    public EmailFetcherService(TicketRepository ticketRepository, EmailClassifierService classifierService,
+                               ContactRepository contactRepository, SlaRepository slaRepository) {
         this.ticketRepository = ticketRepository;
         this.classifierService = classifierService;
+        this.contactRepository = contactRepository;
+        this.slaRepository = slaRepository;
     }
 
     public void fetchAndProcessEmails() {
@@ -59,7 +66,7 @@ public class EmailFetcherService {
             store = session.getStore("imaps");
             store.connect(imapHost, imapUsername, imapPassword);
 
-            inbox = store.getFolder("INBOX");
+            inbox = store.getFolder("Tickets");
             inbox.open(Folder.READ_WRITE);
 
             Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
@@ -95,6 +102,7 @@ public class EmailFetcherService {
         }
 
         String from = extractEmail(message.getFrom());
+        String fromName = extractName(message.getFrom());
         String to = extractEmail(message.getRecipients(Message.RecipientType.TO));
         String subject = message.getSubject();
         Date receivedDate = message.getReceivedDate();
@@ -105,7 +113,7 @@ public class EmailFetcherService {
         String attachmentInfo = content.get("attachments");
         boolean hasAttachments = attachmentInfo != null && !attachmentInfo.equals("[]");
 
-        Category category = classifierService.classify(subject, body != null ? body : htmlBody);
+        String category = classifierService.classify(subject, body != null ? body : htmlBody);
 
         Ticket ticket = new Ticket();
         ticket.setFromEmail(from);
@@ -120,8 +128,33 @@ public class EmailFetcherService {
         ticket.setHasAttachments(hasAttachments);
         ticket.setAttachmentInfo(attachmentInfo);
 
+        // Set SLA deadline based on priority
+        slaRepository.findByPriority(ticket.getPriority()).ifPresent(sla -> {
+            if (sla.getIsActive() && sla.getResolutionHours() != null) {
+                ticket.setDeadline(LocalDateTime.now().plusHours(sla.getResolutionHours()));
+            }
+        });
+
         ticketRepository.save(ticket);
         log.info("Saved ticket: [{}] {} -> Category: {}", ticket.getId(), subject, category);
+
+        // Auto-create or update contact
+        if (from != null && !from.isEmpty()) {
+            Contact contact = contactRepository.findByEmail(from).orElse(null);
+            if (contact == null) {
+                contact = new Contact();
+                contact.setEmail(from);
+                if (fromName != null) {
+                    contact.setName(fromName);
+                }
+                contactRepository.save(contact);
+                log.info("Auto-created contact for: {} ({})", from, fromName);
+            } else if (contact.getName() == null && fromName != null) {
+                contact.setName(fromName);
+                contactRepository.save(contact);
+                log.info("Updated contact name for: {} -> {}", from, fromName);
+            }
+        }
     }
 
     private Map<String, String> extractContent(Part part) throws Exception {
@@ -176,6 +209,16 @@ public class EmailFetcherService {
                 attachments.add(att);
             }
         }
+    }
+
+    private String extractName(Address[] addresses) {
+        if (addresses == null || addresses.length == 0) return null;
+        Address addr = addresses[0];
+        if (addr instanceof InternetAddress) {
+            String personal = ((InternetAddress) addr).getPersonal();
+            return (personal != null && !personal.isBlank()) ? personal : null;
+        }
+        return null;
     }
 
     private String extractEmail(Address[] addresses) {

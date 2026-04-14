@@ -1,9 +1,11 @@
 import Badge from '../common/Badge';
 import { getCategoryColor, getCategoryLabel, getStatusColor, getStatusLabel } from '../../utils/constants';
+import { useCategories } from '../../context/CategoriesContext';
 import { formatDate } from '../../utils/dateFormatter';
 import { FiPaperclip } from 'react-icons/fi';
 
 export default function TicketDetail({ ticket }) {
+  const { categories } = useCategories();
   const attachments = ticket.attachmentInfo ? JSON.parse(ticket.attachmentInfo) : [];
 
   return (
@@ -11,9 +13,9 @@ export default function TicketDetail({ ticket }) {
       <div className="ticket-detail-header">
         <h2>{ticket.subject || '(No Subject)'}</h2>
         <div className="ticket-detail-badges">
-          <Badge label={getCategoryLabel(ticket.category)} color={getCategoryColor(ticket.category)} />
+          <Badge label={getCategoryLabel(ticket.category, categories)} color={getCategoryColor(ticket.category, categories)} />
           <Badge label={getStatusLabel(ticket.status)} color={getStatusColor(ticket.status)} />
-          <Badge label={ticket.priority} color={ticket.priority === 'URGENT' ? '#e74c3c' : ticket.priority === 'HIGH' ? '#f39c12' : '#3498db'} />
+          <Badge label={ticket.priority} color={ticket.priority === 'URGENT' ? '#e74c3c' : ticket.priority === 'HIGH' ? '#f39c12' : '#A0516B'} />
         </div>
       </div>
 

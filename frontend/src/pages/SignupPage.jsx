@@ -26,10 +26,10 @@ export default function SignupPage() {
     if (/[0-9]/.test(pwd)) score++;
     if (/[^A-Za-z0-9]/.test(pwd)) score++;
 
-    if (score <= 1) return { level: 1, label: 'Weak', color: '#e74c3c' };
-    if (score <= 2) return { level: 2, label: 'Fair', color: '#f39c12' };
-    if (score <= 3) return { level: 3, label: 'Good', color: '#3498db' };
-    return { level: 4, label: 'Strong', color: '#27ae60' };
+    if (score <= 1) return { level: 1, label: 'Weak', color: '#C75050' };
+    if (score <= 2) return { level: 2, label: 'Fair', color: '#D4A0B0' };
+    if (score <= 3) return { level: 3, label: 'Good', color: '#A0516B' };
+    return { level: 4, label: 'Strong', color: '#6B3A5E' };
   };
 
   const strength = getPasswordStrength(password);
