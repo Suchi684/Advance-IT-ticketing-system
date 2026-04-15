@@ -16,7 +16,8 @@
       "Read(//c/xampp/mysql/bin/**)",
       "Bash(\"C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p1234 ticketing_system -e \"SELECT id, from_email, subject FROM tickets ORDER BY id;\")",
       "Bash('C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe' -u root -p1234 ticketing_system -e ':*)",
-      "Bash(\"C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p1234 ticketing_system -e \"SELECT id, email, name, company FROM contacts ORDER BY id;\")"
+      "Bash(\"C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe\" -u root -p1234 ticketing_system -e \"SELECT id, email, name, company FROM contacts ORDER BY id;\")",
+      "Read(//d//**)"
     ],
     "additionalDirectories": [
       "d:\\Ticketing system\\backend\\.git"
