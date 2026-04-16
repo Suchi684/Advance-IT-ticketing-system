@@ -63,4 +63,17 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
            "AND t.reminderSent = false AND t.assignedAgent IS NOT NULL " +
            "AND t.status NOT IN ('RESOLVED', 'CLOSED')")
     List<Ticket> findOverdueTickets(@Param("now") java.time.LocalDateTime now);
+
+    @Query("SELECT t.category, COUNT(t) FROM Ticket t WHERE t.fromEmail = :email GROUP BY t.category")
+    List<Object[]> countGroupByCategoryForEmail(@Param("email") String email);
+
+    @Query("SELECT t.fromEmail, t.category, COUNT(t) FROM Ticket t " +
+           "WHERE t.fromEmail IN :emails GROUP BY t.fromEmail, t.category")
+    List<Object[]> countByCategoryForEmails(@Param("emails") List<String> emails);
+
+    @Query("SELECT t.fromEmail, COUNT(t), " +
+           "SUM(CASE WHEN t.status = 'RESOLVED' THEN 1 ELSE 0 END) " +
+           "FROM Ticket t WHERE t.assignedAgent.id = :agentId " +
+           "GROUP BY t.fromEmail ORDER BY COUNT(t) DESC")
+    List<Object[]> countContactsByAgent(@Param("agentId") Long agentId);
 }

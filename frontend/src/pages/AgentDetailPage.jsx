@@ -1,22 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getAgentPerformanceById } from '../services/dashboardService';
+import { getAgentPerformanceById, getAgentContacts } from '../services/dashboardService';
 import Spinner from '../components/common/Spinner';
-import { FiArrowLeft, FiAward, FiCheckCircle, FiClock, FiAlertCircle, FiClipboard } from 'react-icons/fi';
+import { FiArrowLeft, FiAward, FiCheckCircle, FiClock, FiAlertCircle, FiClipboard, FiUsers, FiBook, FiMail } from 'react-icons/fi';
 
 export default function AgentDetailPage() {
   const { agentId } = useParams();
   const [agent, setAgent] = useState(null);
+  const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [contactsLoading, setContactsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await getAgentPerformanceById(agentId);
-        setAgent(res.data);
+        const [perf, contactsRes] = await Promise.all([
+          getAgentPerformanceById(agentId),
+          getAgentContacts(agentId),
+        ]);
+        setAgent(perf.data);
+        setContacts(contactsRes.data || []);
       } catch (err) { console.error(err); }
-      finally { setLoading(false); }
+      finally {
+        setLoading(false);
+        setContactsLoading(false);
+      }
     })();
   }, [agentId]);
 
@@ -24,6 +33,7 @@ export default function AgentDetailPage() {
   if (!agent) return <div className="empty-state-card">Agent not found</div>;
 
   const rate = agent.totalAssigned > 0 ? Math.round((agent.resolved / agent.totalAssigned) * 100) : 0;
+  const uniqueContactCount = contacts.length;
 
   return (
     <div className="agent-detail-page animate-fade-in">
@@ -72,6 +82,58 @@ export default function AgentDetailPage() {
           </svg>
           <div className="completion-ring-text">{rate}%</div>
         </div>
+      </div>
+
+      <div className="agent-contacts-section animate-fade-in-up">
+        <div className="agent-contacts-header">
+          <h3><FiUsers /> Contacts Handled</h3>
+          <span className="agent-contacts-count">{uniqueContactCount} {uniqueContactCount === 1 ? 'contact' : 'contacts'}</span>
+        </div>
+        {contactsLoading ? (
+          <Spinner />
+        ) : contacts.length === 0 ? (
+          <div className="empty-state"><p>No contacts yet — this agent has no assigned tickets.</p></div>
+        ) : (
+          <div className="agent-contacts-grid">
+            {contacts.map(c => {
+              const resolveRate = c.ticketCount > 0 ? Math.round((c.resolvedCount / c.ticketCount) * 100) : 0;
+              const clickable = !!c.contactId;
+              return (
+                <div
+                  key={c.email}
+                  className={`agent-contact-card ${clickable ? 'clickable' : ''}`}
+                  onClick={() => clickable && navigate(`/contacts/${c.contactId}`)}
+                >
+                  <div className="agent-contact-avatar">
+                    {(c.name || c.email || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="agent-contact-info">
+                    <div className="agent-contact-name">
+                      {c.name || <span className="agent-contact-unknown">Unknown contact</span>}
+                    </div>
+                    <div className="agent-contact-email">
+                      <FiMail /> {c.email}
+                    </div>
+                    {c.company && (
+                      <div className="agent-contact-company">
+                        <FiBook /> {c.company}
+                      </div>
+                    )}
+                    <div className="agent-contact-stats">
+                      <span className="agent-contact-stat">
+                        <strong>{c.ticketCount}</strong> ticket{c.ticketCount === 1 ? '' : 's'}
+                      </span>
+                      <span className="agent-contact-stat resolved-stat">
+                        <FiCheckCircle /> {c.resolvedCount} resolved
+                      </span>
+                      <span className="agent-contact-rate">{resolveRate}%</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

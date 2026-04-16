@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getContacts, createContact } from '../services/contactService';
+import { getContactsWithSummary, createContact } from '../services/contactService';
+import { useCategories } from '../context/CategoriesContext';
 import Modal from '../components/common/Modal';
 import Spinner from '../components/common/Spinner';
 import { toast } from 'react-toastify';
-import { FiPlus, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiLayers } from 'react-icons/fi';
 
 export default function ContactsPage() {
   const navigate = useNavigate();
+  const { categories } = useCategories();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -16,17 +18,17 @@ export default function ContactsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', notes: '' });
   const [saving, setSaving] = useState(false);
+  const [filterMulti, setFilterMulti] = useState(false);
 
   useEffect(() => {
     fetchContacts();
-  }, [page, search]);
+  }, [page]);
 
   const fetchContacts = async () => {
     setLoading(true);
     try {
       const params = { page, size: 20 };
-      if (search) params.search = search;
-      const res = await getContacts(params);
+      const res = await getContactsWithSummary(params);
       setContacts(res.data.content || res.data);
       setTotalPages(res.data.totalPages || 1);
     } catch {
@@ -52,6 +54,30 @@ export default function ContactsPage() {
     }
   };
 
+  const getCategoryColor = (name) => {
+    const cat = (categories || []).find(c => c.name === name);
+    return cat?.color || '#95a5a6';
+  };
+
+  const getCategoryLabel = (name) => {
+    const cat = (categories || []).find(c => c.name === name);
+    return cat?.label || name;
+  };
+
+  const matchesSearch = (c) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q) ||
+      (c.company || '').toLowerCase().includes(q)
+    );
+  };
+
+  const visibleContacts = contacts
+    .filter(matchesSearch)
+    .filter(c => !filterMulti || (c.categories || []).length >= 2);
+
   return (
     <div className="contacts-page animate-fade-in">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -61,22 +87,30 @@ export default function ContactsPage() {
         </button>
       </div>
 
-      <div className="filter-bar" style={{ marginBottom: 16 }}>
-        <div className="search-box" style={{ position: 'relative', maxWidth: 320 }}>
+      <div className="filter-bar" style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="search-box" style={{ position: 'relative', maxWidth: 320, flex: '1 1 240px' }}>
           <FiSearch style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#95a5a6' }} />
           <input
             type="text"
             placeholder="Search contacts..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            onChange={(e) => setSearch(e.target.value)}
             style={{ paddingLeft: 34, width: '100%', padding: '8px 12px 8px 34px', border: '1px solid #dfe6e9', borderRadius: 8, fontSize: '0.9rem' }}
           />
         </div>
+        <label className={`multi-cat-toggle ${filterMulti ? 'active' : ''}`}>
+          <input
+            type="checkbox"
+            checked={filterMulti}
+            onChange={(e) => setFilterMulti(e.target.checked)}
+          />
+          <FiLayers /> Multi-category only
+        </label>
       </div>
 
       {loading ? (
         <Spinner />
-      ) : contacts.length === 0 ? (
+      ) : visibleContacts.length === 0 ? (
         <div className="empty-state"><p>No contacts found</p></div>
       ) : (
         <>
@@ -85,19 +119,50 @@ export default function ContactsPage() {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Phone</th>
                 <th>Company</th>
+                <th>Tickets</th>
+                <th>Categories</th>
               </tr>
             </thead>
             <tbody>
-              {contacts.map(contact => (
-                <tr key={contact.id} onClick={() => navigate(`/contacts/${contact.id}`)}>
-                  <td>{contact.name}</td>
-                  <td>{contact.email}</td>
-                  <td>{contact.phone || '-'}</td>
-                  <td>{contact.company || '-'}</td>
-                </tr>
-              ))}
+              {visibleContacts.map(contact => {
+                const cats = contact.categories || [];
+                const isMulti = cats.length >= 2;
+                return (
+                  <tr key={contact.id} onClick={() => navigate(`/contacts/${contact.id}`)}>
+                    <td>
+                      {contact.name}
+                      {isMulti && (
+                        <span className="multi-cat-badge" title={`Wrote about ${cats.length} different categories`}>
+                          <FiLayers /> {cats.length}
+                        </span>
+                      )}
+                    </td>
+                    <td>{contact.email}</td>
+                    <td>{contact.company || '-'}</td>
+                    <td>{contact.totalTickets || 0}</td>
+                    <td>
+                      {cats.length === 0 ? (
+                        <span style={{ color: '#b5aebb', fontSize: '0.85rem' }}>—</span>
+                      ) : (
+                        <div className="cat-chip-group">
+                          {cats.map(c => (
+                            <span
+                              key={c.category}
+                              className="cat-chip"
+                              style={{ background: getCategoryColor(c.category) + '22', color: getCategoryColor(c.category), borderColor: getCategoryColor(c.category) + '55' }}
+                              title={`${getCategoryLabel(c.category)}: ${c.count} ticket${c.count === 1 ? '' : 's'}`}
+                            >
+                              <span className="cat-dot" style={{ background: getCategoryColor(c.category) }}></span>
+                              {getCategoryLabel(c.category)} · {c.count}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 

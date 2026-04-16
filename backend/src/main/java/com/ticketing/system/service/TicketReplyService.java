@@ -20,13 +20,16 @@ public class TicketReplyService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final EmailSenderService emailSenderService;
+    private final ActivityLogService activityLogService;
 
     public TicketReplyService(TicketReplyRepository replyRepository, TicketRepository ticketRepository,
-                               UserRepository userRepository, EmailSenderService emailSenderService) {
+                               UserRepository userRepository, EmailSenderService emailSenderService,
+                               ActivityLogService activityLogService) {
         this.replyRepository = replyRepository;
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
         this.emailSenderService = emailSenderService;
+        this.activityLogService = activityLogService;
     }
 
     public List<TicketReply> getReplies(Long ticketId) {
@@ -52,7 +55,11 @@ public class TicketReplyService {
         reply.setReplyType(ReplyType.REPLY);
         reply.setSentByAgent(agent);
 
-        return replyRepository.save(reply);
+        TicketReply saved = replyRepository.save(reply);
+        activityLogService.log(ticket, "REPLY_SENT",
+                agent.getName() + " replied to " + toEmail + " — \"" + replySubject + "\"",
+                agent.getName());
+        return saved;
     }
 
     public TicketReply forwardEmail(Long ticketId, String toEmail, String subject, String body, String agentEmail) {
@@ -77,7 +84,11 @@ public class TicketReplyService {
         reply.setReplyType(ReplyType.FORWARD);
         reply.setSentByAgent(agent);
 
-        return replyRepository.save(reply);
+        TicketReply saved = replyRepository.save(reply);
+        activityLogService.log(ticket, "EMAIL_FORWARDED",
+                agent.getName() + " forwarded ticket to " + toEmail,
+                agent.getName());
+        return saved;
     }
 
     public TicketReply addNote(Long ticketId, String body, String agentEmail) {
@@ -95,7 +106,11 @@ public class TicketReplyService {
         note.setReplyType(ReplyType.NOTE);
         note.setSentByAgent(agent);
 
-        return replyRepository.save(note);
+        TicketReply saved = replyRepository.save(note);
+        activityLogService.log(ticket, "NOTE_ADDED",
+                agent.getName() + " added an internal note",
+                agent.getName());
+        return saved;
     }
 
     public void forwardToAll(Long ticketId, String subject, String body, String agentEmail) {
@@ -130,5 +145,9 @@ public class TicketReplyService {
             reply.setSentByAgent(agent);
             replyRepository.save(reply);
         }
+
+        activityLogService.log(ticket, "FORWARDED_TO_ALL",
+                agent.getName() + " forwarded ticket to " + emails.length + " agent" + (emails.length == 1 ? "" : "s"),
+                agent.getName());
     }
 }

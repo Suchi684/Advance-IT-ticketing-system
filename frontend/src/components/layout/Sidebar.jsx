@@ -22,9 +22,11 @@ export default function Sidebar() {
             <FiInbox /> All Tickets
           </NavLink>
         )}
-        <NavLink to="/assigned" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-          <FiClipboard /> {isAdmin ? 'Assigned Tasks' : 'My Tasks'}
-        </NavLink>
+        {!isAdmin && (
+          <NavLink to="/assigned" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FiClipboard /> My Tasks
+          </NavLink>
+        )}
         {isAdmin && (
           <NavLink to="/agents" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <FiUsers /> Agent Performance

@@ -1,23 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getContactById, getContactTickets, updateContact, deleteContact } from '../services/contactService';
+import { getContactById, getContactTickets, getContactCategories, updateContact, deleteContact } from '../services/contactService';
+import { useCategories } from '../context/CategoriesContext';
 import Spinner from '../components/common/Spinner';
 import Badge from '../components/common/Badge';
 import { toast } from 'react-toastify';
 import { formatDate } from '../utils/dateFormatter';
 import { getStatusColor, getStatusLabel } from '../utils/constants';
-import { FiArrowLeft, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiEdit2, FiTrash2, FiSave, FiX, FiLayers } from 'react-icons/fi';
 
 export default function ContactDetailPage() {
   const { contactId } = useParams();
   const navigate = useNavigate();
+  const { categories } = useCategories();
   const [contact, setContact] = useState(null);
   const [tickets, setTickets] = useState([]);
+  const [categorySummary, setCategorySummary] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', notes: '' });
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState(null);
+
+  const categoryBreakdown = (categorySummary || [])
+    .map(entry => [entry.category, Number(entry.count) || 0])
+    .sort((a, b) => b[1] - a[1]);
+
+  const hasMultipleCategories = categoryBreakdown.length >= 2;
+
+  const getCategoryColor = (name) => {
+    const cat = (categories || []).find(c => c.name === name);
+    return cat?.color || '#95a5a6';
+  };
+  const getCategoryLabel = (name) => {
+    const cat = (categories || []).find(c => c.name === name);
+    return cat?.label || name;
+  };
 
   useEffect(() => {
     fetchData();
@@ -26,12 +45,14 @@ export default function ContactDetailPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [contactRes, ticketsRes] = await Promise.all([
+      const [contactRes, ticketsRes, catRes] = await Promise.all([
         getContactById(contactId),
         getContactTickets(contactId),
+        getContactCategories(contactId),
       ]);
       setContact(contactRes.data);
       setTickets(ticketsRes.data.content || ticketsRes.data);
+      setCategorySummary(catRes.data || []);
       setForm({
         name: contactRes.data.name || '',
         email: contactRes.data.email || '',
@@ -155,8 +176,64 @@ export default function ContactDetailPage() {
         )}
       </div>
 
+      {categoryBreakdown.length > 0 && (
+        <div className="category-breakdown-card">
+          <div className="category-breakdown-header">
+            <h3><FiLayers /> Category Breakdown</h3>
+            {hasMultipleCategories && (
+              <span className="multi-cat-badge">
+                {categoryBreakdown.length} categories
+              </span>
+            )}
+          </div>
+          {hasMultipleCategories && (
+            <p className="category-breakdown-hint">
+              This contact has written in across multiple categories. Click a chip to filter the ticket list below.
+            </p>
+          )}
+          <div className="category-breakdown-list">
+            {categoryFilter && (
+              <button
+                type="button"
+                className="cat-chip cat-chip-clear"
+                onClick={() => setCategoryFilter(null)}
+              >
+                <FiX /> Clear filter
+              </button>
+            )}
+            {categoryBreakdown.map(([cat, count]) => {
+              const color = getCategoryColor(cat);
+              const active = categoryFilter === cat;
+              return (
+                <button
+                  type="button"
+                  key={cat}
+                  className={`cat-chip cat-chip-lg ${active ? 'active' : ''}`}
+                  onClick={() => setCategoryFilter(active ? null : cat)}
+                  style={{
+                    background: active ? color : color + '22',
+                    color: active ? '#fff' : color,
+                    borderColor: color + '88',
+                  }}
+                >
+                  <span className="cat-dot" style={{ background: active ? '#fff' : color }}></span>
+                  {getCategoryLabel(cat)} <strong>· {count}</strong>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div style={{ marginTop: 20 }}>
-        <h3 style={{ marginBottom: 12 }}>Tickets ({tickets.length})</h3>
+        <h3 style={{ marginBottom: 12 }}>
+          Tickets ({categoryFilter ? tickets.filter(t => (t.category || 'GENERAL') === categoryFilter).length : tickets.length})
+          {categoryFilter && (
+            <span style={{ marginLeft: 8, fontSize: '0.85rem', color: '#7A7480', fontWeight: 400 }}>
+              filtered by {getCategoryLabel(categoryFilter)}
+            </span>
+          )}
+        </h3>
         {tickets.length === 0 ? (
           <div className="empty-state"><p>No tickets for this contact</p></div>
         ) : (
@@ -165,19 +242,35 @@ export default function ContactDetailPage() {
               <tr>
                 <th>ID</th>
                 <th>Subject</th>
+                <th>Category</th>
                 <th>Status</th>
                 <th>Date</th>
               </tr>
             </thead>
             <tbody>
-              {tickets.map(t => (
-                <tr key={t.id} onClick={() => navigate(`/tickets/${t.id}`)}>
-                  <td>#{t.id}</td>
-                  <td>{t.subject || '(No Subject)'}</td>
-                  <td><Badge label={getStatusLabel(t.status)} color={getStatusColor(t.status)} /></td>
-                  <td>{formatDate(t.receivedDate)}</td>
-                </tr>
-              ))}
+              {tickets
+                .filter(t => !categoryFilter || (t.category || 'GENERAL') === categoryFilter)
+                .map(t => {
+                  const cat = t.category || 'GENERAL';
+                  const color = getCategoryColor(cat);
+                  return (
+                    <tr key={t.id} onClick={() => navigate(`/tickets/${t.id}`)}>
+                      <td>#{t.id}</td>
+                      <td>{t.subject || '(No Subject)'}</td>
+                      <td>
+                        <span
+                          className="cat-chip"
+                          style={{ background: color + '22', color, borderColor: color + '55' }}
+                        >
+                          <span className="cat-dot" style={{ background: color }}></span>
+                          {getCategoryLabel(cat)}
+                        </span>
+                      </td>
+                      <td><Badge label={getStatusLabel(t.status)} color={getStatusColor(t.status)} /></td>
+                      <td>{formatDate(t.receivedDate)}</td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         )}

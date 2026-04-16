@@ -79,6 +79,16 @@ export default function SignupPage() {
 
   return (
     <div className="auth-page">
+      <span className="auth-float-icon icon-notepad">&#128221;</span>
+      <span className="auth-float-icon icon-clipboard">&#128203;</span>
+      <span className="auth-float-icon icon-envelope">&#9993;&#65039;</span>
+      <span className="auth-float-icon icon-calendar">&#128197;</span>
+      <span className="auth-float-icon icon-pencil">&#9999;&#65039;</span>
+      <span className="auth-float-icon icon-folder">&#128193;</span>
+      <span className="auth-float-icon icon-pin">&#128204;</span>
+      <span className="auth-float-icon icon-clock">&#9200;</span>
+      <span className="auth-float-icon icon-check">&#9989;</span>
+      <span className="auth-float-icon icon-headset">&#127911;</span>
       <div className="auth-card animate-fade-in-up">
         <div className="auth-logo-section">
           <div className="auth-logo-icon">

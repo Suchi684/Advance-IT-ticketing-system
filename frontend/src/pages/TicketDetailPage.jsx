@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getTicketById, updateStatus, updateDeadline, addNote, updateTicketTags, getActivityLog, submitCsat } from '../services/ticketService';
+import { getTicketById, updateStatus, updateDeadline, addNote, updateTicketTags, getActivityLog } from '../services/ticketService';
 import { getTags } from '../services/tagService';
 import { getReplies } from '../services/replyService';
 import TicketDetail from '../components/tickets/TicketDetail';
@@ -14,7 +14,7 @@ import { toast } from 'react-toastify';
 import { formatDate } from '../utils/dateFormatter';
 import { STATUSES } from '../utils/constants';
 import { useAuth } from '../context/AuthContext';
-import { FiCornerUpLeft, FiShare, FiUsers, FiSend, FiArrowLeft, FiClock, FiAlertTriangle, FiFileText, FiChevronDown, FiChevronUp, FiX, FiStar } from 'react-icons/fi';
+import { FiCornerUpLeft, FiShare, FiUsers, FiSend, FiArrowLeft, FiClock, FiAlertTriangle, FiFileText, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi';
 
 const TAG_COLORS = ['#A0516B', '#6B3A5E', '#D4A0B0', '#332F34', '#C75050', '#7D4568', '#B5AEBB', '#8B4259', '#8C8590', '#9E6880'];
 
@@ -45,13 +45,6 @@ export default function TicketDetailPage() {
   const [activityLog, setActivityLog] = useState([]);
   const [activityOpen, setActivityOpen] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
-
-  // CSAT state
-  const [csatRating, setCsatRating] = useState(0);
-  const [csatHover, setCsatHover] = useState(0);
-  const [csatComment, setCsatComment] = useState('');
-  const [csatSubmitting, setCsatSubmitting] = useState(false);
-  const [csatSubmitted, setCsatSubmitted] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -167,24 +160,6 @@ export default function TicketDetailPage() {
       }
     }
     setActivityOpen(!activityOpen);
-  };
-
-  // CSAT handler
-  const handleCsatSubmit = async () => {
-    if (csatRating === 0) {
-      toast.error('Please select a rating');
-      return;
-    }
-    setCsatSubmitting(true);
-    try {
-      await submitCsat(id, csatRating, csatComment);
-      toast.success('Thank you for your feedback!');
-      setCsatSubmitted(true);
-    } catch {
-      toast.error('Failed to submit feedback');
-    } finally {
-      setCsatSubmitting(false);
-    }
   };
 
   const getTagColor = (tag) => {
@@ -325,43 +300,6 @@ export default function TicketDetailPage() {
         </div>
       )}
 
-      {/* CSAT Survey Section */}
-      {(ticket.status === 'RESOLVED') && !csatSubmitted && (
-        <div className="csat-section">
-          <h3>How satisfied are you with the resolution?</h3>
-          <div className="csat-stars">
-            {[1, 2, 3, 4, 5].map(star => (
-              <span
-                key={star}
-                className={`csat-star ${star <= (csatHover || csatRating) ? 'active' : ''}`}
-                onClick={() => setCsatRating(star)}
-                onMouseEnter={() => setCsatHover(star)}
-                onMouseLeave={() => setCsatHover(0)}
-              >
-                <FiStar fill={star <= (csatHover || csatRating) ? '#f39c12' : 'none'} />
-              </span>
-            ))}
-          </div>
-          <div className="csat-comment">
-            <textarea
-              placeholder="Any additional comments? (optional)"
-              value={csatComment}
-              onChange={(e) => setCsatComment(e.target.value)}
-            />
-          </div>
-          <button className="btn btn-primary" onClick={handleCsatSubmit} disabled={csatSubmitting}>
-            {csatSubmitting ? 'Submitting...' : 'Submit Feedback'}
-          </button>
-        </div>
-      )}
-
-      {csatSubmitted && (
-        <div className="csat-section">
-          <h3>Thank you for your feedback!</h3>
-          <p style={{ color: '#7f8c8d', marginTop: 8 }}>Your rating: {csatRating}/5</p>
-        </div>
-      )}
-
       {/* Activity Log Section */}
       <div className="activity-log">
         <h3 onClick={toggleActivityLog}>
@@ -378,8 +316,13 @@ export default function TicketDetailPage() {
                 <div key={idx} className="activity-entry">
                   <div className="activity-dot"></div>
                   <div>
-                    <div className="activity-text">{entry.description || entry.action}</div>
-                    <div className="activity-time">{formatDate(entry.timestamp || entry.createdAt)}</div>
+                    <div className="activity-text">{entry.details || entry.description || entry.action}</div>
+                    <div className="activity-time">
+                      {entry.performedBy && entry.performedBy !== 'system' && (
+                        <span style={{ marginRight: 8 }}>{entry.performedBy} ·</span>
+                      )}
+                      {formatDate(entry.timestamp || entry.createdAt)}
+                    </div>
                   </div>
                 </div>
               ))
